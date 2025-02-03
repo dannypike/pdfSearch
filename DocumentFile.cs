@@ -36,6 +36,8 @@ namespace PdfSearch {
       private static int nextId_ = 0;
 
       const int TruncateLength = 80;
+      const string DefaultTitle = "<title not found>";
+      private Regex regexCleanForConsole = new Regex(@"[^\x20-\x7E]");
 
       public int Id { get; set; } = ++nextId_;
       public string Pathname { get; set; } = "";
@@ -90,7 +92,7 @@ namespace PdfSearch {
             var pageNumber = new PageNumber() { PdfPageNumber = pdfPageNumber };
 
             // Look for keywords in each block
-            string title = "";
+            string title = DefaultTitle;
             var pdfBlockIndex = 0;
             var numberOfBlocks = pdfBlocks.Count();
             foreach (var pdfBlock in pdfBlocks) {
@@ -135,10 +137,11 @@ namespace PdfSearch {
                      // If this is the first match, then output the title
                      if (!foundMatch) {
                         Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
-                        title = "";
                         }
 
-                     Console.WriteLine($"\r\u001b[K\rPage {pageNumber}: {reportText} matches: "
+                     // The console does not like non-ANSI codes
+                     var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
+                     Console.WriteLine($"\r\u001b[K\rPage {pageNumber}: {consoleText} matches: "
                         + $"\"{string.Join("\", \"", result.Select(rr => rr.Value).Distinct())}\"");
 
                      foundMatch = true;

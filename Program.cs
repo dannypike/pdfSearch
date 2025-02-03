@@ -40,8 +40,8 @@ namespace PdfSearch {
             foreach (string pdfFilename in pdfFiles) {
                using (var docFile = new DocumentFile()) {
                   docFile.Pathname = pdfFilename;
-                  if (pdfFilename.Contains("Ch14")) {
-                     docFile.Pathname = pdfFilename;
+                  if (!pdfFilename.Contains("Ch7")) {
+                     continue;
                      }
                   if (docFile.Open()) {
                      Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
