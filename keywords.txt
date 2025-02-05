@@ -7,7 +7,7 @@ CAWS
 /Community\sAction/
 contiguency
 Corsham Road
-/danger(|ous)?/
+/danger(ous)?/
 emergency
 Gastard
 Golf

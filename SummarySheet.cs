@@ -70,7 +70,7 @@ namespace PdfSearch {
          var kwId = 1;
          cells[++lastRow, 2].Value = "#";
          cells[lastRow, 3].Value = "Keyword";
-         cells[lastRow, 4].Value = "Pages";
+         cells[lastRow, 4].Value = "# of pages";
 
          keywordfirstRow_ = lastRow + 1;
          foreach (var kw in rawKeywords) {

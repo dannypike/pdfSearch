@@ -145,8 +145,8 @@ namespace PdfSearch {
                         documentSheet?.SetTitle(title);
                         }
 
-                     // Log which keywords would be successfully matched against this block
-                     // TODO
+                     // Log which regex expressions triggered the "match"
+                     TODO
 
                      // And log the words that matched one of the above
                      var matchingKeywords = result.Select(rr => rr.Value).Distinct(StringComparer.CurrentCultureIgnoreCase);
