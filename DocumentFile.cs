@@ -35,14 +35,19 @@ namespace PdfSearch {
    internal class DocumentFile : IDisposable {
       private static int nextId_ = 0;
 
-      const int TruncateLength = 80;
+      const int TruncateLength = 120;
       const string DefaultTitle = "<title not found>";
       private Regex regexCleanForConsole = new Regex(@"[^\x20-\x7E]");
+      private Results results_;  // The spreadsheet for output
 
       public int Id { get; set; } = ++nextId_;
       public string Pathname { get; set; } = "";
 
       private PdfDocument? pdfFile_ = null;
+
+      public DocumentFile(Results results) {
+         results_ = results;
+         }
 
       public int PageCount {
          get {
@@ -66,7 +71,7 @@ namespace PdfSearch {
          pdfFile_?.Dispose();
          }
 
-      public void SearchPages(string pathName, List<string> keywords, Regex finder) {
+      public void SearchPages(string pathName, List<string> keywords, Regex finder, Results results) {
 
          var foundMatch = false;
          var pdfPageNumber = 0;   // The PDF page number (not the same as the Lime Down Index page number)
@@ -75,6 +80,7 @@ namespace PdfSearch {
             Console.WriteLine($"\r\u001b[K\rNo pages in the PDF file '{pathName}'\u001b[K\n");
             return;
             }
+         var documentSheet = results.AddPage(pathName, numberOfPages);
          while (++pdfPageNumber <= numberOfPages) {
             var pdfPage = pdfFile_?.GetPage(pdfPageNumber);
             if (pdfPage == null) {
@@ -89,7 +95,7 @@ namespace PdfSearch {
 
             // The page number may be roman numerals or other non-numeric values and it can be anywhere on the page
             // (though typically near the beginning of the blocks).
-            var pageNumber = new PageNumber() { PdfPageNumber = pdfPageNumber };
+            var pageNumber = new PageNumber(documentSheet) { PdfPageNumber = pdfPageNumber };
 
             // Look for keywords in each block
             string title = DefaultTitle;
@@ -109,7 +115,7 @@ namespace PdfSearch {
                   }
 
                // Is this the title block?
-               if (title.Length == 0) {
+               if (title == DefaultTitle) {
                   var blockText = pdfBlock.Text.Replace("\n", " ");
                   int indexOfTitle = blockText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
@@ -137,12 +143,16 @@ namespace PdfSearch {
                      // If this is the first match, then output the title
                      if (!foundMatch) {
                         Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
+                        documentSheet.SetTitle(title);
                         }
 
                      // The console does not like non-ANSI codes
+                     var matchingKeywords = result.Select(rr => rr.Value).Distinct();
                      var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
                      Console.WriteLine($"\r\u001b[K\rPage {pageNumber}: {consoleText} matches: "
-                        + $"\"{string.Join("\", \"", result.Select(rr => rr.Value).Distinct())}\"");
+                        + $"\"{string.Join("\", \"", matchingKeywords)}\"");
+
+                     documentSheet.AddKeywords(pageNumber, reportText, matchingKeywords);
 
                      foundMatch = true;
                      }
@@ -150,6 +160,9 @@ namespace PdfSearch {
                   }
                }
             }
+
+         documentSheet.FormatColumns();
+         
          if (foundMatch) {
             // Blank line between each document
             Console.WriteLine("");

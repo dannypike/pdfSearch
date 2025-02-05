@@ -1,4 +1,7 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2024 Danny Pike.
+
+using OfficeOpenXml;
+using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
@@ -16,6 +19,8 @@ namespace PdfSearch {
          var spinCount = 0;
          var documents = new Dictionary<int, DocumentFile>();
 
+         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
          List<string> rawKeywords;
          try {
             rawKeywords = File.ReadAllLines("keywords.txt").ToList();
@@ -32,23 +37,29 @@ namespace PdfSearch {
          var keywords = rawKeywords.ConvertAll(kw => Regex.Escape(kw));
          var finder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
 
+         var now = DateTime.Now;
          try {
             string[] pdfFiles = Directory.GetFiles(folderPath, "*.pdf");
             var fileCount = pdfFiles.Count();
 
-            Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
-            foreach (string pdfFilename in pdfFiles) {
-               using (var docFile = new DocumentFile()) {
-                  docFile.Pathname = pdfFilename;
-                  if (docFile.Open()) {
-                     Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
-                        + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
+            // Create an Excel spreadsheet to hold the search results
+            using (var results = new Results()) {
+               Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
+               results.Summary?.addKeywords(rawKeywords);
 
-                     documents.Add(docFile.Id, docFile);
-                     docFile.SearchPages(pdfFilename, keywords, finder);
-                     }
-                  else {
-                     Console.WriteLine($"\r\u001b[K\rfailed to open PDF file '{pdfFilename}'");
+               foreach (string pdfFilename in pdfFiles) {
+                  using (var docFile = new DocumentFile(results)) {
+                     docFile.Pathname = pdfFilename;
+                     if (docFile.Open()) {
+                        Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
+                           + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
+
+                        documents.Add(docFile.Id, docFile);
+                        docFile.SearchPages(pdfFilename, keywords, finder, results);
+                        }
+                     else {
+                        Console.WriteLine($"\r\u001b[K\rfailed to open PDF file '{pdfFilename}'");
+                        }
                      }
                   }
                }
