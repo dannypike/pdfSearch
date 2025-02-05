@@ -20,7 +20,7 @@ namespace PdfSearch {
       private int titleRow_;
       private int maxMatchingColumn_ = 4;
       private string titleText_ = "";
-      const int TRUNCATE_FILENAME_PREFIX = 19;
+      const string REMOVE_FILENAME_COMMON_PART1 = "EN010168 LDSP PEIR ";
       const int COLUMN_WIDTH_CONTEXT = 115;
 
       public DocumentSheet(ExcelPackage? book, string pdfFilename, int numberOfPages) {
@@ -29,8 +29,11 @@ namespace PdfSearch {
          numberOfPages_ = numberOfPages;
 
          var fileInfo = new FileInfo(pdfFilename_);
-         var namePrefix = Path.GetFileNameWithoutExtension(fileInfo.Name)?
-               .Remove(0, TRUNCATE_FILENAME_PREFIX).Replace("_", " ");
+         var namePrefix = Path.GetFileNameWithoutExtension(fileInfo.Name);
+         namePrefix = namePrefix
+            .Replace("_", " ")
+            .Replace(REMOVE_FILENAME_COMMON_PART1, "")
+            ;
          var xlSheets = book_?.Workbook.Worksheets;
          if (xlSheets == null) {
             throw new Exception("failed to add document sheet: there is no workbook");
@@ -48,10 +51,10 @@ namespace PdfSearch {
 
          // Summary details
          nextRow_ = range_.Start.Row;
-         range_[nextRow_, 1].Value = "Document";
+         range_[nextRow_, 1].Value = "Document details";
 
          range_[++nextRow_, 1].Value = "PDF file";
-         range_[nextRow_, 3].Value = pdfFilename_;
+         range_[nextRow_, 3].Value = Path.GetFileName(pdfFilename_);
 
          range_[++nextRow_, 1].Value = "Title";
          range_[nextRow_, 3].Value = "not found";

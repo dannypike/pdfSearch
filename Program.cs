@@ -34,8 +34,11 @@ namespace PdfSearch {
             return 2;
             }
 
-         var keywords = rawKeywords.ConvertAll(kw => Regex.Escape(kw));
+         var keywords = rawKeywords.ConvertAll(kw => kw.StartsWith("/") && kw.EndsWith("/")
+            ? kw[1..^1] : Regex.Escape(kw));
          var finder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
+         var matcher = keywords.ConvertAll(kw => (kw.StartsWith("/") && kw.EndsWith("/"))
+            ? new Regex(kw[1..^1], RegexOptions.IgnoreCase) : new Regex(Regex.Escape(kw), RegexOptions.IgnoreCase));
 
          var now = DateTime.Now;
          try {
@@ -45,7 +48,8 @@ namespace PdfSearch {
             // Create an Excel spreadsheet to hold the search results
             using (var results = new Results()) {
                Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
-               results.Summary?.addKeywords(rawKeywords);
+               SummarySheet? summary = results.Summary;
+               summary?.addKeywords(rawKeywords);
 
                foreach (string pdfFilename in pdfFiles) {
                   using (var docFile = new DocumentFile(results)) {
@@ -55,15 +59,21 @@ namespace PdfSearch {
                            + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
 
                         documents.Add(docFile.Id, docFile);
-                        docFile.SearchPages(pdfFilename, keywords, finder, results);
-                        }
-                     else {
-                        Console.WriteLine($"\r\u001b[K\rfailed to open PDF file '{pdfFilename}'");
+                        var matched = docFile.SearchPages(pdfFilename, matcher, finder, results);
+                        if (summary != null) {
+                           ++summary.TotalFiles;
+                           summary.TotalPages += docFile.NumberOfPages;
+                           if (matched) {
+                              ++summary.TotalMatchingFiles;
+                              }
+                           }
                         }
                      }
+
                   }
+               results.Finish();
+               return 0;
                }
-            return 0;
             }
          catch (Exception ex) {
             Console.WriteLine($"\r\u001b[K\rexception: {ex.Message}\u001b");

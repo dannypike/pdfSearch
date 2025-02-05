@@ -11,6 +11,7 @@ namespace PdfSearch {
       public SummarySheet? Summary = null;
       public Dictionary<string, DocumentSheet> PageSheets = new Dictionary<string, DocumentSheet>();
       private string xlsxFilename_ = "searchResults.xlsx";
+      private UnmatchedSheet? Unmatched;
 
       public Results() {
          //xlsxFilename_ = $"searchResults-{DateTime.Now:yyyy-MM-dd HH-mm-ss}.xlsx";
@@ -22,7 +23,12 @@ namespace PdfSearch {
                }
             }
          book_ = new ExcelPackage(fileInfo);
+
+         // Create the Summary sheet that lists the keywords
          Summary = new SummarySheet(book_);
+
+         // Create a worksheet that will list any documents that match nothing
+         Unmatched = new UnmatchedSheet(book_);
          }
 
       public void Dispose() {
@@ -39,6 +45,13 @@ namespace PdfSearch {
          return pageSheet;
          }
 
+      internal void AddUnmatchedSheet(string pathName, string title) {
+         Unmatched?.addUnmatched(pathName, title);
+         }
+
+      internal void Finish() {
+         Summary?.Finish();
+         Unmatched?.FormatColumns();
+         }
       }
    }
-

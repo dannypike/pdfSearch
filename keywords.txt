@@ -1,40 +1,32 @@
 A350
 B3353
 Beanacre
-Boyds Farm
+/Boyds\sFarm/
 CAWS
-Chapel Knapp
-Community Action
+/Chapel\sKnapp/
+/Community\sAction/
 contiguency
 Corsham Road
-dangerous
+/danger(|ous)?/
 emergency
 Gastard
 Golf
-Goods Hill
-Goodes Hill
+/Goode?s\sHill/
 fire
 fluori
-Littleworth Lane
-Melksham
-Melksham Without
-Middle Farm
+/Littleworth\sLane/
+/Melksham(\sWithout)?/
+/Middle\sFarm/
 MWPC
-National Grid
-Neston
-Neston Estate
+/National\sGrid/
+/Neston(|\sEstate)/
 Octavian
 plume
 Shaw
 Shunt Reactor
-South Brook
-Southbrook
-Sub-station
-Substation
-Top Lane
+/South\s?Brook/
+/Sub-?station/
+/Top\sLane/
 Transformer
-Westlands Farm
-Westlands Lane
-Whitley
-Whitley Barn
-Whitley House
+/Westlands\s((Farm)|(Lane))/
+/Whitley(|(\sBarn)|(\sHouse))/
