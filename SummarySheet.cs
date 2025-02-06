@@ -56,13 +56,13 @@ namespace PdfSearch {
 
          var lastRow = 0;
 
-         cells[++lastRow, 1].Value = "# of files:";
+         cells[++lastRow, 1].Value = "# of documents:";
          fileCountRow_ = lastRow;
-         cells[++lastRow, 1].Value = "# of matching files:";
+         cells[++lastRow, 1].Value = "# of documents with matches:";
          matchingFileCountRow_ = lastRow;
          cells[++lastRow, 1].Value = "# of pages:";
          pageCountRow_ = lastRow;
-         cells[++lastRow, 1].Value = "# of matching pages:";
+         cells[++lastRow, 1].Value = "# of pages with matches:";
          matchingPageCountRow_ = lastRow;
          ++lastRow;
          cells[++lastRow, 1].Value = "Keywords:";

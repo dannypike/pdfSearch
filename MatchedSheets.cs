@@ -6,25 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace PdfSearch {
-   internal class UnmatchedSheet {
+   internal class MatchedSheets {
       private ExcelWorksheet? sheet_;
       private ExcelPackage book_;
       private int lastRow_ = -1;
 
-      public UnmatchedSheet(ExcelPackage book) {
+      public MatchedSheets(ExcelPackage book) {
          book_ = book;
-         sheet_ = book_.Workbook.Worksheets.Add("No matches");
+         sheet_ = book_.Workbook.Worksheets.Add("With matches");
          var cells = sheet_?.Cells;
          if (cells == null) {
-            throw new Exception("Unmatched sheet has null Cells property");
+            throw new Exception("Matched sheet has null Cells property");
             }
-         cells[1, 1].Value = "The following files do not match any of the keywords:";
+         cells[1, 1].Value = "The following files match at least one of the keywords:";
          cells[3, 1].Value = "Filename";
          cells[3, 2].Value = "Title";
          lastRow_ = 3;
          }
 
-      public void addUnmatched(string pdfFilename, string title) {
+      public void addMatched(string pdfFilename, string title) {
          var cells = sheet_?.Cells;
          if (cells == null) {
             return;

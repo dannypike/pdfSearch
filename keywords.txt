@@ -14,6 +14,7 @@ Golf
 /Goode?s\s+Hill/
 fire
 fluori
+/hazard(ous)?/
 /Littleworth\s+Lane/
 /Melksham(\s+Without)?/
 /Middle\s+Farm/
@@ -23,7 +24,7 @@ MWPC
 Octavian
 plume
 Shaw
-Shunt Reactor
+/Shunt\s+Reactor/
 /South\s+?Brook/
 /Sub-?station/
 /Top\s+Lane/

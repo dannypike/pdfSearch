@@ -118,6 +118,7 @@ namespace PdfSearch {
                   int indexOfTitle = blockText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
                      title = blockText[indexOfTitle..];
+                     documentSheet?.SetTitle(title);
                      continue;
                      }
                   }
@@ -142,11 +143,10 @@ namespace PdfSearch {
                      if (documentSheet == null) {
                         documentSheet = results.AddPage(pathName, NumberOfPages);
                         Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
-                        documentSheet?.SetTitle(title);
                         }
 
-                     // Log which regex expressions triggered the "match"
-                     TODO
+#warning "TODO: Log which regex expressions triggered the match"
+                     //TODO: Log which regex expressions triggered the "match"
 
                      // And log the words that matched one of the above
                      var matchingKeywords = result.Select(rr => rr.Value).Distinct(StringComparer.CurrentCultureIgnoreCase);
@@ -173,6 +173,7 @@ namespace PdfSearch {
 
          if (documentSheet != null) {
             documentSheet.FormatColumns();
+            results.AddMatchedSheet(Path.GetFileName(pathName), title);
 
             // Blank line between each document
             Console.WriteLine();
