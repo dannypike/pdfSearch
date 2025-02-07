@@ -1,4 +1,7 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2024 Danny Pike.
+
+using OfficeOpenXml;
+using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
@@ -16,6 +19,8 @@ namespace PdfSearch {
          var spinCount = 0;
          var documents = new Dictionary<int, DocumentFile>();
 
+         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
          List<string> rawKeywords;
          try {
             rawKeywords = File.ReadAllLines("keywords.txt").ToList();
@@ -29,30 +34,57 @@ namespace PdfSearch {
             return 2;
             }
 
-         var keywords = rawKeywords.ConvertAll(kw => Regex.Escape(kw));
-         var finder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
+         string definition;
+         List<string> keywords = new List<string>();
+         List<Regex?> individualRegexes = new List<Regex?>();
+         foreach (var kw in rawKeywords) {
+            if (kw.StartsWith("/") && kw.EndsWith("/")) {
+               definition = $"({kw[1..^1]})";
+               individualRegexes.Add(new Regex(definition, RegexOptions.IgnoreCase));
+               }
+            else {
+               definition = kw;
+               individualRegexes.Add(null);  // Use a text comparison, not a Regex
+               }
+            keywords.Add(definition);
+            }
 
+         var quickFinder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
+
+         var now = DateTime.Now;
          try {
             string[] pdfFiles = Directory.GetFiles(folderPath, "*.pdf");
             var fileCount = pdfFiles.Count();
 
-            Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
-            foreach (string pdfFilename in pdfFiles) {
-               using (var docFile = new DocumentFile()) {
-                  docFile.Pathname = pdfFilename;
-                  if (docFile.Open()) {
-                     Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
-                        + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
+            // Create an Excel spreadsheet to hold the search results
+            using (var results = new Results()) {
+               Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
+               SummarySheet? summary = results.Summary;
+               summary?.addKeywords(rawKeywords);
 
-                     documents.Add(docFile.Id, docFile);
-                     docFile.SearchPages(pdfFilename, keywords, finder);
+               foreach (string pdfFilename in pdfFiles) {
+                  using (var docFile = new DocumentFile(results)) {
+                     docFile.Pathname = pdfFilename;
+                     if (docFile.Open()) {
+                        Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
+                           + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
+
+                        documents.Add(docFile.Id, docFile);
+                        var matched = docFile.SearchPages(pdfFilename, rawKeywords, individualRegexes, quickFinder, results);
+                        if (summary != null) {
+                           ++summary.TotalFiles;
+                           summary.TotalPages += docFile.NumberOfPages;
+                           if (matched) {
+                              ++summary.TotalMatchingFiles;
+                              }
+                           }
+                        }
                      }
-                  else {
-                     Console.WriteLine($"\r\u001b[K\rfailed to open PDF file '{pdfFilename}'");
-                     }
+
                   }
+               results.Finish();
+               return 0;
                }
-            return 0;
             }
          catch (Exception ex) {
             Console.WriteLine($"\r\u001b[K\rexception: {ex.Message}\u001b");
