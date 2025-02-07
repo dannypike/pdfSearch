@@ -34,11 +34,22 @@ namespace PdfSearch {
             return 2;
             }
 
-         var keywords = rawKeywords.ConvertAll(kw => kw.StartsWith("/") && kw.EndsWith("/")
-            ? kw[1..^1] : Regex.Escape(kw));
-         var finder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
-         var matcher = keywords.ConvertAll(kw => (kw.StartsWith("/") && kw.EndsWith("/"))
-            ? new Regex(kw[1..^1], RegexOptions.IgnoreCase) : new Regex(Regex.Escape(kw), RegexOptions.IgnoreCase));
+         string definition;
+         List<string> keywords = new List<string>();
+         List<Regex?> individualRegexes = new List<Regex?>();
+         foreach (var kw in rawKeywords) {
+            if (kw.StartsWith("/") && kw.EndsWith("/")) {
+               definition = $"({kw[1..^1]})";
+               individualRegexes.Add(new Regex(definition, RegexOptions.IgnoreCase));
+               }
+            else {
+               definition = kw;
+               individualRegexes.Add(null);  // Use a text comparison, not a Regex
+               }
+            keywords.Add(definition);
+            }
+
+         var quickFinder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
 
          var now = DateTime.Now;
          try {
@@ -59,7 +70,7 @@ namespace PdfSearch {
                            + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
 
                         documents.Add(docFile.Id, docFile);
-                        var matched = docFile.SearchPages(pdfFilename, matcher, finder, results);
+                        var matched = docFile.SearchPages(pdfFilename, rawKeywords, individualRegexes, quickFinder, results);
                         if (summary != null) {
                            ++summary.TotalFiles;
                            summary.TotalPages += docFile.NumberOfPages;

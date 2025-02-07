@@ -73,7 +73,8 @@ namespace PdfSearch {
          pdfFile_?.Dispose();
          }
 
-      public bool SearchPages(string pathName, List<Regex> matchKeywords, Regex finder, Results results) {
+      public bool SearchPages(string pathName, List<string> userKeywords
+            , List<Regex?> regexKeywords, Regex finder, Results results) {
 
          string title = DefaultTitle;
          DocumentSheet? documentSheet = null;
@@ -113,7 +114,7 @@ namespace PdfSearch {
                   }
 
                // Is this the title block?
-               if (title == DefaultTitle) {
+               if (title == DefaultTitle) {  // Have we already got the title?
                   var blockText = pdfBlock.Text.Replace("\n", " ");
                   int indexOfTitle = blockText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
@@ -145,11 +146,30 @@ namespace PdfSearch {
                         Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
                         }
 
-#warning "TODO: Log which regex expressions triggered the match"
-                     //TODO: Log which regex expressions triggered the "match"
+                     // And log the words that matched one of the keyword definitions
+                     var matchingKeywords = result.Select(rr => rr.Value)
+                        .Distinct(StringComparer.CurrentCultureIgnoreCase);
 
-                     // And log the words that matched one of the above
-                     var matchingKeywords = result.Select(rr => rr.Value).Distinct(StringComparer.CurrentCultureIgnoreCase);
+                     // Also record how many times each keyword matches any page in any document
+                     var regexCount = regexKeywords.Count;
+                     foreach (var keyword in matchingKeywords) {
+                        for (var ii = 0; ii < regexCount; ++ii) {
+                           var userKeyword = userKeywords[ii];
+                           var isMatch = false;
+                           if (userKeyword.StartsWith("/") && userKeyword.EndsWith("/")) {
+                              // It's a regex definition string, so we use the supplied Regex
+                              var regexKeyword = regexKeywords[ii];
+                              isMatch = regexKeyword?.IsMatch(keyword) ?? false;
+                              }
+                           else {
+                              // Use simple string comparison for non-regex keywords
+                              isMatch = userKeyword.Equals(keyword, StringComparison.CurrentCultureIgnoreCase);
+                              }
+                           if (isMatch) {
+                              summary?.IncKeyword(userKeyword);
+                              }
+                           }
+                        }
 
                      // The console does not like non-ANSI codes
                      var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
@@ -163,7 +183,7 @@ namespace PdfSearch {
                      ++summary.TotalMatchingPages;
                      }
                   }
-                  ++pdfBlockIndex;
+               ++pdfBlockIndex;
                }
             }
 

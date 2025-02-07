@@ -86,10 +86,6 @@ namespace PdfSearch {
          keywordLastRow_ = lastRow;
          }
 
-      internal void AddKeywordPage(string keyword, int count = 1) {
-         keywordPages_[keyword] += count;
-         }
-
       internal void Finish() {
          var cells = sheet_?.Cells;
          if (cells == null) {
@@ -118,6 +114,11 @@ namespace PdfSearch {
          cells[1, 1].EntireColumn.AutoFit();
          cells[1, 2].EntireColumn.AutoFit();
          cells[1, 3].EntireColumn.AutoFit();
+         }
+
+      internal void IncKeyword(string userKeyword) {
+         keywordPages_.TryGetValue(userKeyword, out int count);
+         keywordPages_[userKeyword] = count + 1;
          }
       }
    }
