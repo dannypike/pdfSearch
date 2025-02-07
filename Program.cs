@@ -25,7 +25,10 @@ namespace PdfSearch {
 
          List<string> rawKeywords;
          try {
-            rawKeywords = File.ReadAllLines("keywords.txt").ToList();
+            rawKeywords = File.ReadAllLines("keywords.txt")
+               .Select(kw => kw.Trim())
+               .ToList();
+            rawKeywords.RemoveAll(kw => kw.StartsWith("#") || (kw == ""));
             }
          catch (Exception ex) {
             Console.WriteLine($"Could not read 'keywords.txt' from folder "
