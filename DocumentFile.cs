@@ -63,8 +63,8 @@ namespace PdfSearch {
             return true;
             }
          catch (Exception ex) {
-            Console.WriteLine($"\r\u001b[K\rfailed to open PDF file '{Pathname}'"
-               + $", error was: {ex.Message}\u001b");
+            Logger.WriteLine($"failed to open PDF file '{Pathname}'"
+               + $", error was: {ex.Message}");
             return false;
             }
          }
@@ -81,10 +81,11 @@ namespace PdfSearch {
          SummarySheet? summary = results.Summary;
          var pdfPageNumber = 0;   // The PDF page number (not the same as the Lime Down Index page number)
          NumberOfPages = pdfFile_?.NumberOfPages ?? 0;
+         Program.TotalPages += NumberOfPages;
          while (++pdfPageNumber <= NumberOfPages) {
             var pdfPage = pdfFile_?.GetPage(pdfPageNumber);
             if (pdfPage == null) {
-               Console.WriteLine($"Failed to get page {pdfPageNumber} from PDF file '{pathName}'");
+               Logger.WriteLine($"Failed to get page {pdfPageNumber} from PDF file '{pathName}'", false);
                break;
                }
 
@@ -144,7 +145,7 @@ namespace PdfSearch {
                      // If this is the first match, then output the title
                      if (documentSheet == null) {
                         documentSheet = results.AddPage(pathName, NumberOfPages);
-                        Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
+                        Logger.WriteLine($"\n{title}");
                         }
 
                      // And log the words that matched one of the keyword definitions
@@ -174,7 +175,7 @@ namespace PdfSearch {
 
                      // The console does not like non-ANSI codes
                      var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
-                     Console.WriteLine($"\r\u001b[K\rPage {pageNumber}: {consoleText} matches: "
+                     Logger.WriteLine($"Page {pageNumber}: '{consoleText}' matches: "
                         + $"\"{string.Join("\", \"", matchingKeywords)}\"");
 
                      documentSheet?.AddKeywords(pageNumber, reportText, matchingKeywords);
@@ -189,7 +190,7 @@ namespace PdfSearch {
             }
 
          if (0 == NumberOfPages) {
-            Console.WriteLine($"\r\u001b[K\rNo pages in the PDF file '{pathName}'\u001b[K\n");
+            Logger.WriteLine($"No pages in the PDF file '{pathName}'");
             }
 
          if (documentSheet != null) {
@@ -197,7 +198,7 @@ namespace PdfSearch {
             results.AddMatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
 
             // Blank line between each document
-            Console.WriteLine();
+            Logger.WriteLine("");
             return true;
             }
          results.AddUnmatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);

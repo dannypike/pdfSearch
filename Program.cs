@@ -13,6 +13,8 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace PdfSearch {
    internal class Program {
+      public static int TotalPages { get; internal set; }
+
       static int Main(string[] args) {
          string folderPath = @"D:\root\WhitleyShaw\CAWS\Battery\WG\Documents\BESS PEIR";
          string[] spinner = new string[] { "|", "/", "-", "\\" };
@@ -58,7 +60,7 @@ namespace PdfSearch {
 
             // Create an Excel spreadsheet to hold the search results
             using (var results = new Results()) {
-               Console.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
+               Logger.WriteLine($"Scanning {fileCount} {pluralled("file", fileCount)} in folder {folderPath}:");
                SummarySheet? summary = results.Summary;
                summary?.addKeywords(rawKeywords);
 
@@ -83,11 +85,12 @@ namespace PdfSearch {
 
                   }
                results.Finish();
+               Logger.WriteLine($"Scanned {TotalPages} pages over {fileCount} {pluralled("document", fileCount)}");
                return 0;
                }
             }
          catch (Exception ex) {
-            Console.WriteLine($"\r\u001b[K\rexception: {ex.Message}\u001b");
+            Logger.WriteLine($"exception: {ex.Message}");
             return 1;
             }
          }
