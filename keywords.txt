@@ -15,6 +15,7 @@ Golf
 fire
 fluori
 /hazard(ous)?/
+inverter
 /Littleworth\s+Lane/
 /Melksham(\s+Without)?/
 /Middle\s+Farm/
@@ -23,7 +24,7 @@ MWPC
 /Neston(|\s+Estate)/
 Octavian
 plume
-Shaw
+/(?-i)\bShaw\b(?i)/
 /Shunt\s+Reactor/
 /South\s+?Brook/
 /Sub-?station/
