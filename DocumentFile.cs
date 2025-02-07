@@ -35,20 +35,27 @@ namespace PdfSearch {
    internal class DocumentFile : IDisposable {
       private static int nextId_ = 0;
 
-      const int TruncateLength = 80;
-      const string DefaultTitle = "<title not found>";
+      const int TruncateLength = 120;
+      const string DefaultTitle = "";
       private Regex regexCleanForConsole = new Regex(@"[^\x20-\x7E]");
+      private Results results_;  // The spreadsheet for output
 
       public int Id { get; set; } = ++nextId_;
       public string Pathname { get; set; } = "";
 
       private PdfDocument? pdfFile_ = null;
 
+      public DocumentFile(Results results) {
+         results_ = results;
+         }
+
       public int PageCount {
          get {
             return pdfFile_?.NumberOfPages ?? 0;
             }
          }
+
+      public int NumberOfPages { get; private set; }
 
       internal bool Open() {
          try {
@@ -66,18 +73,18 @@ namespace PdfSearch {
          pdfFile_?.Dispose();
          }
 
-      public void SearchPages(string pathName, List<string> keywords, Regex finder) {
+      public bool SearchPages(string pathName, List<string> userKeywords
+            , List<Regex?> regexKeywords, Regex finder, Results results) {
 
-         var foundMatch = false;
+         string title = DefaultTitle;
+         DocumentSheet? documentSheet = null;
+         SummarySheet? summary = results.Summary;
          var pdfPageNumber = 0;   // The PDF page number (not the same as the Lime Down Index page number)
-         var numberOfPages = pdfFile_?.NumberOfPages ?? 0;
-         if (0 == numberOfPages) {
-            Console.WriteLine($"\r\u001b[K\rNo pages in the PDF file '{pathName}'\u001b[K\n");
-            return;
-            }
-         while (++pdfPageNumber <= numberOfPages) {
+         NumberOfPages = pdfFile_?.NumberOfPages ?? 0;
+         while (++pdfPageNumber <= NumberOfPages) {
             var pdfPage = pdfFile_?.GetPage(pdfPageNumber);
             if (pdfPage == null) {
+               Console.WriteLine($"Failed to get page {pdfPageNumber} from PDF file '{pathName}'");
                break;
                }
 
@@ -92,7 +99,6 @@ namespace PdfSearch {
             var pageNumber = new PageNumber() { PdfPageNumber = pdfPageNumber };
 
             // Look for keywords in each block
-            string title = DefaultTitle;
             var pdfBlockIndex = 0;
             var numberOfBlocks = pdfBlocks.Count();
             foreach (var pdfBlock in pdfBlocks) {
@@ -109,11 +115,12 @@ namespace PdfSearch {
                   }
 
                // Is this the title block?
-               if (title.Length == 0) {
+               if (title == DefaultTitle) {  // Have we already got the title?
                   var blockText = pdfBlock.Text.Replace("\n", " ");
                   int indexOfTitle = blockText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
                      title = blockText[indexOfTitle..];
+                     documentSheet?.SetTitle(title);
                      continue;
                      }
                   }
@@ -122,7 +129,7 @@ namespace PdfSearch {
                string reportText;
                var searchText = pdfBlock.Text.Replace("\n", " ");
                var result = finder.Matches(searchText);
-               if (finder.IsMatch(searchText)) {
+               if (result.Count > 0) {
                   var reportLength = Math.Min(searchText.Length, TruncateLength);
                   if (0 < reportLength) {
                      if (reportLength >= searchText.Length) {
@@ -135,25 +142,66 @@ namespace PdfSearch {
                         }
 
                      // If this is the first match, then output the title
-                     if (!foundMatch) {
+                     if (documentSheet == null) {
+                        documentSheet = results.AddPage(pathName, NumberOfPages);
                         Console.WriteLine($"\n\u001b[K\r{title}\u001b[K");
+                        }
+
+                     // And log the words that matched one of the keyword definitions
+                     var matchingKeywords = result.Select(rr => rr.Value)
+                        .Distinct(StringComparer.CurrentCultureIgnoreCase);
+
+                     // Also record how many times each keyword matches any page in any document
+                     var regexCount = regexKeywords.Count;
+                     foreach (var keyword in matchingKeywords) {
+                        for (var ii = 0; ii < regexCount; ++ii) {
+                           var userKeyword = userKeywords[ii];
+                           var isMatch = false;
+                           if (userKeyword.StartsWith("/") && userKeyword.EndsWith("/")) {
+                              // It's a regex definition string, so we use the supplied Regex
+                              var regexKeyword = regexKeywords[ii];
+                              isMatch = regexKeyword?.IsMatch(keyword) ?? false;
+                              }
+                           else {
+                              // Use simple string comparison for non-regex keywords
+                              isMatch = userKeyword.Equals(keyword, StringComparison.CurrentCultureIgnoreCase);
+                              }
+                           if (isMatch) {
+                              summary?.IncKeyword(userKeyword);
+                              }
+                           }
                         }
 
                      // The console does not like non-ANSI codes
                      var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
                      Console.WriteLine($"\r\u001b[K\rPage {pageNumber}: {consoleText} matches: "
-                        + $"\"{string.Join("\", \"", result.Select(rr => rr.Value).Distinct())}\"");
+                        + $"\"{string.Join("\", \"", matchingKeywords)}\"");
 
-                     foundMatch = true;
+                     documentSheet?.AddKeywords(pageNumber, reportText, matchingKeywords);
                      }
-                  ++pdfBlockIndex;
+
+                  if (summary != null) {
+                     ++summary.TotalMatchingPages;
+                     }
                   }
+               ++pdfBlockIndex;
                }
             }
-         if (foundMatch) {
-            // Blank line between each document
-            Console.WriteLine("");
+
+         if (0 == NumberOfPages) {
+            Console.WriteLine($"\r\u001b[K\rNo pages in the PDF file '{pathName}'\u001b[K\n");
             }
+
+         if (documentSheet != null) {
+            documentSheet.FormatColumns();
+            results.AddMatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
+
+            // Blank line between each document
+            Console.WriteLine();
+            return true;
+            }
+         results.AddUnmatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
+         return false;
          }
       }
    }
