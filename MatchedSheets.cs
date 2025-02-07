@@ -21,16 +21,18 @@ namespace PdfSearch {
          cells[1, 1].Value = "The following files match at least one of the keywords:";
          cells[3, 1].Value = "Filename";
          cells[3, 2].Value = "Title";
+         cells[3, 3].Value = "Pages";
          lastRow_ = 3;
          }
 
-      public void addMatched(string pdfFilename, string title) {
+      public void addMatched(string pdfFilename, string title, int pageCount) {
          var cells = sheet_?.Cells;
          if (cells == null) {
             return;
             }
          cells[++lastRow_, 1].Value = pdfFilename;
          cells[lastRow_, 2].Value = title;
+         cells[lastRow_, 3].Value = pageCount;
          }
 
       internal void FormatColumns() {

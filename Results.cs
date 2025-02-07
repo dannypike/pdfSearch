@@ -47,12 +47,12 @@ namespace PdfSearch {
          return pageSheet;
          }
 
-      internal void AddMatchedSheet(string pathName, string title) {
-         Matched?.addMatched(pathName, title);
+      internal void AddMatchedSheet(string pathName, string title, int pageCount) {
+         Matched?.addMatched(pathName, title, pageCount);
          }
 
-      internal void AddUnmatchedSheet(string pathName, string title) {
-         Unmatched?.addUnmatched(pathName, title);
+      internal void AddUnmatchedSheet(string pathName, string title, int pageCount) {
+         Unmatched?.addUnmatched(pathName, title, pageCount);
          }
 
       internal void Finish() {

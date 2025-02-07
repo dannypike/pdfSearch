@@ -84,6 +84,7 @@ namespace PdfSearch {
          while (++pdfPageNumber <= NumberOfPages) {
             var pdfPage = pdfFile_?.GetPage(pdfPageNumber);
             if (pdfPage == null) {
+               Console.WriteLine($"Failed to get page {pdfPageNumber} from PDF file '{pathName}'");
                break;
                }
 
@@ -193,13 +194,13 @@ namespace PdfSearch {
 
          if (documentSheet != null) {
             documentSheet.FormatColumns();
-            results.AddMatchedSheet(Path.GetFileName(pathName), title);
+            results.AddMatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
 
             // Blank line between each document
             Console.WriteLine();
             return true;
             }
-         results.AddUnmatchedSheet(Path.GetFileName(pathName), title);
+         results.AddUnmatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
          return false;
          }
       }
