@@ -77,6 +77,7 @@ namespace PdfSearch {
 
          // List of paragraphs where keywords were found
          firstRow_ = ++nextRow_;
+         range_[nextRow_, 1].Value = "ID (ignore this)";
          range_[nextRow_, 2].Value = "Page";
          range_[nextRow_, 3].Value = "Context";
          range_[nextRow_, 4].Value = "Keywords";
@@ -101,11 +102,16 @@ namespace PdfSearch {
             }
          }
 
-      internal void AddKeywords(PageNumber pageNumber, string reportText, IEnumerable<string> matchingKeywords) {
+      internal void AddKeywords(PageNumber pageNumber, string reportText
+            , string blockId, IEnumerable<string> matchingKeywords) {
+
          if (range_ == null) {
             return;
             }
-         range_[++nextRow_, 2].Value = pageNumber;
+         range_[++nextRow_, 1].Value = blockId;
+         range_[nextRow_, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+         range_[nextRow_, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Orange);
+         range_[nextRow_, 2].Value = pageNumber;
          range_[nextRow_, 3].Value = reportText;
 
          var columnIndex = 4;

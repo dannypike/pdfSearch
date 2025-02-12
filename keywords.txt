@@ -1,3 +1,5 @@
+# /figure\s+\b[5-7]\b/
+
 A350
 B3353
 Beanacre

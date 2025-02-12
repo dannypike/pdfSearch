@@ -11,25 +11,17 @@
 //    - the search for keywords in PDF files
 //    - the display of the search progress, results and errors
 
+using System.IO.Hashing;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel.Design;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Text;
+using System.Runtime.Intrinsics.Arm;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
-using UglyToad.PdfPig.DocumentLayoutAnalysis;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.PageSegmenter;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.ReadingOrderDetector;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.WordExtractor;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text;
+using System.Reflection.PortableExecutable;
+using System.Diagnostics;
 
 namespace PdfSearch {
    internal class DocumentFile : IDisposable {
@@ -115,10 +107,13 @@ namespace PdfSearch {
                   continue;
                   }
 
+               var blockText = pdfBlock.Text;
+
+               var searchText = blockText.Replace("\n", " ");
+
                // Is this the title block?
                if (title == DefaultTitle) {  // Have we already got the title?
-                  var blockText = pdfBlock.Text.Replace("\n", " ");
-                  int indexOfTitle = blockText.IndexOf("Volume ");
+                  int indexOfTitle = searchText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
                      title = blockText[indexOfTitle..];
                      documentSheet?.SetTitle(title);
@@ -128,7 +123,6 @@ namespace PdfSearch {
 
                // Look for keywords in this block
                string reportText;
-               var searchText = pdfBlock.Text.Replace("\n", " ");
                var result = finder.Matches(searchText);
                if (result.Count > 0) {
                   var reportLength = Math.Min(searchText.Length, TruncateLength);
@@ -178,7 +172,13 @@ namespace PdfSearch {
                      Logger.WriteLine($"Page {pageNumber}: '{consoleText}' matches: "
                         + $"\"{string.Join("\", \"", matchingKeywords)}\"");
 
-                     documentSheet?.AddKeywords(pageNumber, reportText, matchingKeywords);
+                     var crc32 = new System.IO.Hashing.Crc32();
+                     crc32.Append(Encoding.UTF8.GetBytes(blockText));
+                     var ll = crc32.HashLengthInBytes;
+                     Debug.Assert(ll == 4);
+                     var blockId = $"{BitConverter.ToUInt32(crc32.GetHashAndReset(), 0):X8}";
+
+                     documentSheet?.AddKeywords(pageNumber, reportText, blockId, matchingKeywords);
                      }
 
                   if (summary != null) {
