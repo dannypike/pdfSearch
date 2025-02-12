@@ -59,6 +59,10 @@ namespace PdfSearch {
          Summary?.Finish();
          Matched?.FormatColumns();
          Unmatched?.FormatColumns();
+
+         foreach(var pageSheet in PageSheets) {
+            pageSheet.Value.Finish();
+            }
          }
       }
    }

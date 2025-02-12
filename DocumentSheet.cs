@@ -22,6 +22,8 @@ namespace PdfSearch {
       private string titleText_ = "";
       const string REMOVE_FILENAME_COMMON_PART1 = "EN010168 LDSP PEIR ";
       const int COLUMN_WIDTH_CONTEXT = 115;
+      private Dictionary<int, PageNumber> toCheck_ = new Dictionary<int, PageNumber>();
+      private int pageToReadRow_;
 
       internal int DocumentIndex { get; private set; }
 
@@ -69,6 +71,10 @@ namespace PdfSearch {
 
          range_[++nextRow_, 1].Value = "Total Pages";
          range_[nextRow_, 2].Value = numberOfPages;
+
+         range_[++nextRow_, 1].Value = "Pages to read";
+
+         pageToReadRow_ = nextRow_;
 
          ++nextRow_;
          ++nextRow_;
@@ -119,6 +125,21 @@ namespace PdfSearch {
             maxMatchingColumn_ = Math.Max(maxMatchingColumn_, columnIndex);
             range_[nextRow_, columnIndex++].Value = kw;
             }
+
+         // Mark this page as needing to be checked by a human
+         if (!toCheck_.ContainsKey(pageNumber.PdfPageNumber)) {   
+            toCheck_.Add(pageNumber.PdfPageNumber, pageNumber);
+            }
+         }
+
+      internal void Finish() {
+         if (range_ == null) {
+            return;
+            }
+         var sortedPages = toCheck_.Keys.OrderBy(kk => kk)
+            .Select(kk => toCheck_[kk].ToString())
+            .ToList();
+         range_[pageToReadRow_, 3].Value = string.Join(", ", sortedPages);
          }
       }
    }
