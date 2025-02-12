@@ -73,7 +73,7 @@ namespace PdfSearch {
          pdfFile_?.Dispose();
          }
 
-      public bool SearchPages(string pathName, List<string> userKeywords
+      public bool SearchPages(string pathName, int pdfIndex, List<string> userKeywords
             , List<Regex?> regexKeywords, Regex finder, Results results) {
 
          string title = DefaultTitle;
@@ -144,7 +144,7 @@ namespace PdfSearch {
 
                      // If this is the first match, then output the title
                      if (documentSheet == null) {
-                        documentSheet = results.AddPage(pathName, NumberOfPages);
+                        documentSheet = results.AddPage(pathName, pdfIndex, NumberOfPages);
                         Logger.WriteLine($"\n{title}");
                         }
 

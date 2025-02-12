@@ -14,6 +14,7 @@ using static System.Collections.Specialized.BitVector32;
 namespace PdfSearch {
    internal class Program {
       public static int TotalPages { get; internal set; }
+      public static string Version { get => "1"; }
 
       static int Main(string[] args) {
          string folderPath = @"D:\root\WhitleyShaw\CAWS\Battery\WG\Documents\BESS PEIR";
@@ -58,7 +59,16 @@ namespace PdfSearch {
 
          var now = DateTime.Now;
          try {
-            string[] pdfFiles = Directory.GetFiles(folderPath, "*.pdf");
+            string[] pdfFiles = [];
+            if (File.Exists("filenames.txt")) {
+               pdfFiles = File.ReadAllLines("filenames.txt")
+                  .Select(tt => tt.Trim())
+                  .Where(tt => !tt.StartsWith("# "))
+                  .ToArray();
+               }
+            if (0 == pdfFiles.Length) {
+               pdfFiles = Directory.GetFiles(folderPath, "*.pdf");
+               }
             var fileCount = pdfFiles.Count();
 
             // Create an Excel spreadsheet to hold the search results
@@ -67,6 +77,7 @@ namespace PdfSearch {
                SummarySheet? summary = results.Summary;
                summary?.addKeywords(rawKeywords);
 
+               int pdfIndex = 0;
                foreach (string pdfFilename in pdfFiles) {
                   using (var docFile = new DocumentFile(results)) {
                      docFile.Pathname = pdfFilename;
@@ -75,7 +86,8 @@ namespace PdfSearch {
                            + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
 
                         documents.Add(docFile.Id, docFile);
-                        var matched = docFile.SearchPages(pdfFilename, rawKeywords, individualRegexes, quickFinder, results);
+                        var matched = docFile.SearchPages(pdfFilename, ++pdfIndex, rawKeywords
+                           , individualRegexes, quickFinder, results);
                         if (summary != null) {
                            ++summary.TotalFiles;
                            summary.TotalPages += docFile.NumberOfPages;

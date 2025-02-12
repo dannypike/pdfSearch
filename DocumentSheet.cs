@@ -23,10 +23,13 @@ namespace PdfSearch {
       const string REMOVE_FILENAME_COMMON_PART1 = "EN010168 LDSP PEIR ";
       const int COLUMN_WIDTH_CONTEXT = 115;
 
-      public DocumentSheet(ExcelPackage? book, string pdfFilename, int numberOfPages) {
+      internal int DocumentIndex { get; private set; }
+
+      public DocumentSheet(ExcelPackage? book, string pdfFilename, int pdfIndex, int numberOfPages) {
          book_ = book;
          pdfFilename_ = pdfFilename;
          numberOfPages_ = numberOfPages;
+         DocumentIndex = pdfIndex;
 
          var fileInfo = new FileInfo(pdfFilename_);
          var namePrefix = Path.GetFileNameWithoutExtension(fileInfo.Name);
@@ -51,7 +54,11 @@ namespace PdfSearch {
 
          // Summary details
          nextRow_ = range_.Start.Row;
-         range_[nextRow_, 1].Value = "Document details";
+         range_[nextRow_, 1].Value = "Document id";
+         range_[nextRow_, 2].Value = $"{Program.Version}.{DocumentIndex}";
+         ++nextRow_;
+
+         range_[++nextRow_, 1].Value = "Document details";
 
          range_[++nextRow_, 1].Value = "PDF file";
          range_[nextRow_, 3].Value = Path.GetFileName(pdfFilename_);
@@ -64,7 +71,9 @@ namespace PdfSearch {
          range_[nextRow_, 2].Value = numberOfPages;
 
          ++nextRow_;
+         ++nextRow_;
          range_[++nextRow_, 1].Value = "Matches found";
+         ++nextRow_;
 
          // List of paragraphs where keywords were found
          firstRow_ = ++nextRow_;
