@@ -55,7 +55,7 @@ namespace PdfSearch {
          var lastRow = 0;
 
          cells[++lastRow, 1].Value = "Created:";
-         cells[lastRow, 2].Value = Program.Timestamp;
+         cells[lastRow, 2].Value = $"{Program.Timestamp:dd MMM yyyy HH:mm:ss}";
          cells[lastRow, 5].Value = "Copyright (c) 2025 Community Action: Whitley and Shaw. All rights reserved.";
 
          ++lastRow;

@@ -62,17 +62,18 @@ namespace PdfSearch {
 
          range_[++nextRow_, 1].Value = "Document details";
 
-         range_[++nextRow_, 1].Value = "PDF file";
-         range_[nextRow_, 3].Value = Path.GetFileName(pdfFilename_);
+         range_[++nextRow_, 3].Value = "PDF file";
+         range_[nextRow_, 4].Value = Path.GetFileName(pdfFilename_);
 
-         range_[++nextRow_, 1].Value = "Title";
-         range_[nextRow_, 3].Value = "not found";
+         range_[++nextRow_, 3].Value = "Title";
+         range_[nextRow_, 4].Value = "not found";
          titleRow_ = nextRow_;
 
-         range_[++nextRow_, 1].Value = "Total Pages";
-         range_[nextRow_, 2].Value = numberOfPages;
+         range_[++nextRow_, 3].Value = "Total Pages";
+         range_[nextRow_, 4].Value = numberOfPages;
+         range_[nextRow_, 4].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
 
-         range_[++nextRow_, 1].Value = "Pages to read";
+         range_[++nextRow_, 3].Value = "Pages to read";
 
          pagesToReadRow_ = nextRow_;
 
@@ -83,17 +84,30 @@ namespace PdfSearch {
 
          // List of paragraphs where keywords were found
          firstRow_ = ++nextRow_;
-         range_[nextRow_, 1].Value = Program.Timestamp;
-         range_[nextRow_, 2].Value = "ID (ignore this)";
+         range_[nextRow_, 1].Value = "Timestamp (DP only)";
+         range_[nextRow_, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+         range_[nextRow_, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Orange);
+         range_[nextRow_, 1].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+         range_[nextRow_, 2].Value = "ID (DP only)";
+         range_[nextRow_, 2].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+         range_[nextRow_, 2].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Orange);
+         range_[nextRow_, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
          range_[nextRow_, 3].Value = "Page";
+         range_[nextRow_, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
          range_[nextRow_, 4].Value = "Context";
+         range_[nextRow_, 4].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
          range_[nextRow_, 5].Value = "Keywords";
+         range_[nextRow_, 5].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
          }
 
       internal void SetTitle(string title) {
          titleText_ = title;
          if (range_ != null) {
-            range_[titleRow_, 3].Value = titleText_;
+            range_[titleRow_, 4].Value = titleText_;
             }
          }
 
@@ -101,11 +115,8 @@ namespace PdfSearch {
          if (range_ == null) {
             return;
             }
-         range_[1, 1].EntireColumn.AutoFit();
-         for (var ii = 4; ii <= maxMatchingColumn_; ++ii) {
-            if (range_ != null) {
-               range_[1, ii].EntireColumn.AutoFit();
-               }
+         for (var ii = 1; ii <= maxMatchingColumn_; ++ii) {
+            range_[1, ii].EntireColumn.AutoFit();
             }
          }
 
@@ -115,13 +126,21 @@ namespace PdfSearch {
          if (range_ == null) {
             return;
             }
-         range_[++nextRow_, 1].Value = blockId;
+
+         range_[++nextRow_, 1].Value = $"{Program.Timestamp:dd MMM yyyy HH:mm:ss}";
          range_[nextRow_, 1].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
          range_[nextRow_, 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Orange);
-         range_[nextRow_, 2].Value = pageNumber;
-         range_[nextRow_, 3].Value = reportText;
 
-         var columnIndex = 4;
+         range_[nextRow_, 2].Value = blockId;
+         range_[nextRow_, 2].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+         range_[nextRow_, 2].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Orange);
+
+         range_[nextRow_, 3].Value = pageNumber;
+         range_[nextRow_, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+         range_[nextRow_, 4].Value = reportText;
+
+         var columnIndex = 5;
          foreach (var kw in matchingKeywords) {
             maxMatchingColumn_ = Math.Max(maxMatchingColumn_, columnIndex);
             range_[nextRow_, columnIndex++].Value = kw;
@@ -138,7 +157,7 @@ namespace PdfSearch {
             return;
             }
 
-         range_[pagesToReadRow_, 2].Value = toCheck_.Count;
+         range_[pagesToReadRow_, 4].Value = toCheck_.Count;
          
          // Combine adjacent pages into ranges
          var checkCount = toCheck_.Count;
@@ -149,12 +168,14 @@ namespace PdfSearch {
          if (checkCount == 2) {
             // simple cases
             var twoPages = toCheck_.Keys.OrderBy(kk => kk).Select(kk => toCheck_[kk].ToString());
-            range_[pagesToReadRow_, 3].Value = string.Join(", ", twoPages);
+            range_[pagesToReadRow_, 4].Value = string.Join(", ", twoPages);
             return;
             }
 
          // Convert individual pages into tuples with min/max values that are equal
          var minMax = toCheck_.Keys.OrderBy(kk => kk).Select(kk => (MinPage: toCheck_[kk], MaxPage: toCheck_[kk])).ToList();
+         var pageCount = minMax.Count;
+         range_[pagesToReadRow_ + 1, 4].Value = $"(a total of {pageCount} {Program.pluralled("page", pageCount)})";
 
          // Combine adjacent entries, if they are adjacent in the PDF page numbering
          var index = 0;
@@ -174,7 +195,7 @@ namespace PdfSearch {
          // Then display those ranges
          var csvPages = minMax
             .Select(pp => pp.MinPage == pp.MaxPage ? pp.MinPage.ToString() : $"{pp.MinPage}-{pp.MaxPage}");
-         range_[pagesToReadRow_, 3].Value = string.Join(", ", csvPages);
+         range_[pagesToReadRow_, 4].Value = string.Join(", ", csvPages);
          }
       }
    }

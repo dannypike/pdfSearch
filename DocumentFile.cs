@@ -173,12 +173,13 @@ namespace PdfSearch {
                      Logger.WriteLine($"Page {pageNumber}: '{consoleText}' matches: "
                      + $"\"{string.Join("\", \"", matchingKeywords)}\"");
 
+                     // Identify the block and include a CRC, in case it changes in the future
                      var crc32 = new System.IO.Hashing.Crc32();
                      crc32.Append(Encoding.UTF8.GetBytes(blockText));
                      var ll = crc32.HashLengthInBytes;
                      Debug.Assert(ll == 4);
-                     var blockId = $"{BitConverter.ToUInt32(crc32.GetHashAndReset(), 0):X8}";
-
+                     
+                     var blockId = $"{pdfPageNumber}/{BitConverter.ToUInt32(crc32.GetHashAndReset(), 0):X8}/{pdfBlockIndex}/{Program.Version}";
                      documentSheet?.AddKeywords(pageNumber, reportText, blockId, matchingKeywords);
                      }
 
