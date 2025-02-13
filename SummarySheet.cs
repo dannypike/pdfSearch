@@ -51,10 +51,15 @@ namespace PdfSearch {
          if (cells == null) {
             throw new Exception("addKeywords:summary sheet has null Cells property");
             }
-         //cells[1, 3].Value = "Count";
-         //cells[1, 4].Value = "Documents";
 
          var lastRow = 0;
+
+         cells[++lastRow, 1].Value = "Created:";
+         cells[lastRow, 2].Value = Program.Timestamp;
+         cells[lastRow, 5].Value = "Copyright (c) 2025 Community Action: Whitley and Shaw. All rights reserved.";
+
+         ++lastRow;
+         cells[lastRow, 5].Value = "This document is CONFIDENTIAL and MUST NOT be shown to any third parties, without the express permission from both the CAWS Chairman and CAWS Secretary.";
 
          cells[++lastRow, 1].Value = "# of documents:";
          fileCountRow_ = lastRow;

@@ -23,7 +23,7 @@ namespace PdfSearch {
       const string REMOVE_FILENAME_COMMON_PART1 = "EN010168 LDSP PEIR ";
       const int COLUMN_WIDTH_CONTEXT = 115;
       private Dictionary<int, PageNumber> toCheck_ = new Dictionary<int, PageNumber>();
-      private int pageToReadRow_;
+      private int pagesToReadRow_;
 
       internal int DocumentIndex { get; private set; }
 
@@ -74,7 +74,7 @@ namespace PdfSearch {
 
          range_[++nextRow_, 1].Value = "Pages to read";
 
-         pageToReadRow_ = nextRow_;
+         pagesToReadRow_ = nextRow_;
 
          ++nextRow_;
          ++nextRow_;
@@ -83,10 +83,11 @@ namespace PdfSearch {
 
          // List of paragraphs where keywords were found
          firstRow_ = ++nextRow_;
-         range_[nextRow_, 1].Value = "ID (ignore this)";
-         range_[nextRow_, 2].Value = "Page";
-         range_[nextRow_, 3].Value = "Context";
-         range_[nextRow_, 4].Value = "Keywords";
+         range_[nextRow_, 1].Value = Program.Timestamp;
+         range_[nextRow_, 2].Value = "ID (ignore this)";
+         range_[nextRow_, 3].Value = "Page";
+         range_[nextRow_, 4].Value = "Context";
+         range_[nextRow_, 5].Value = "Keywords";
          }
 
       internal void SetTitle(string title) {
@@ -136,10 +137,44 @@ namespace PdfSearch {
          if (range_ == null) {
             return;
             }
-         var sortedPages = toCheck_.Keys.OrderBy(kk => kk)
-            .Select(kk => toCheck_[kk].ToString())
-            .ToList();
-         range_[pageToReadRow_, 3].Value = string.Join(", ", sortedPages);
+
+         range_[pagesToReadRow_, 2].Value = toCheck_.Count;
+         
+         // Combine adjacent pages into ranges
+         var checkCount = toCheck_.Count;
+         if (checkCount == 0) {
+            // degenerate case
+            return;
+            }
+         if (checkCount == 2) {
+            // simple cases
+            var twoPages = toCheck_.Keys.OrderBy(kk => kk).Select(kk => toCheck_[kk].ToString());
+            range_[pagesToReadRow_, 3].Value = string.Join(", ", twoPages);
+            return;
+            }
+
+         // Convert individual pages into tuples with min/max values that are equal
+         var minMax = toCheck_.Keys.OrderBy(kk => kk).Select(kk => (MinPage: toCheck_[kk], MaxPage: toCheck_[kk])).ToList();
+
+         // Combine adjacent entries, if they are adjacent in the PDF page numbering
+         var index = 0;
+         while (index < minMax.Count - 1) {
+            var thisPage = minMax[index].MaxPage;
+            var nextPage = minMax[index + 1].MinPage;
+            if (thisPage.PdfPageNumber + 1 == nextPage.PdfPageNumber) {
+               minMax[index] = (MinPage: minMax[index].MinPage, MaxPage: minMax[index+1].MaxPage);
+               minMax.RemoveAt(index + 1);
+               }
+            else {
+               ++index;
+               thisPage = nextPage;
+               }
+            }
+
+         // Then display those ranges
+         var csvPages = minMax
+            .Select(pp => pp.MinPage == pp.MaxPage ? pp.MinPage.ToString() : $"{pp.MinPage}-{pp.MaxPage}");
+         range_[pagesToReadRow_, 3].Value = string.Join(", ", csvPages);
          }
       }
    }

@@ -139,7 +139,7 @@ namespace PdfSearch {
                      // If this is the first match, then output the title
                      if (documentSheet == null) {
                         documentSheet = results.AddPage(pathName, pdfIndex, NumberOfPages);
-                        Logger.WriteLine($"\n{title}");
+                        Logger.WriteLine(title);
                         }
 
                      // And log the words that matched one of the keyword definitions
@@ -169,8 +169,9 @@ namespace PdfSearch {
 
                      // The console does not like non-ANSI codes
                      var consoleText = regexCleanForConsole.Replace(reportText, "\xa4");
+
                      Logger.WriteLine($"Page {pageNumber}: '{consoleText}' matches: "
-                        + $"\"{string.Join("\", \"", matchingKeywords)}\"");
+                     + $"\"{string.Join("\", \"", matchingKeywords)}\"");
 
                      var crc32 = new System.IO.Hashing.Crc32();
                      crc32.Append(Encoding.UTF8.GetBytes(blockText));
@@ -197,8 +198,8 @@ namespace PdfSearch {
             documentSheet.FormatColumns();
             results.AddMatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
 
-            // Blank line between each document
-            Logger.WriteLine("");
+            // Document separator
+            Logger.WriteLine("+++");
             return true;
             }
          results.AddUnmatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
@@ -206,4 +207,3 @@ namespace PdfSearch {
          }
       }
    }
-

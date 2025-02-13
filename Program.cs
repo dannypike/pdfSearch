@@ -15,6 +15,7 @@ namespace PdfSearch {
    internal class Program {
       public static int TotalPages { get; internal set; }
       public static string Version { get => "1"; }
+      public static string Timestamp { get; internal set; } = "";
 
       static int Main(string[] args) {
          string folderPath = @"D:\root\WhitleyShaw\CAWS\Battery\WG\Documents\BESS PEIR";
@@ -23,6 +24,7 @@ namespace PdfSearch {
          var documents = new Dictionary<int, DocumentFile>();
 
          ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+         Timestamp = $"{DateTime.Now:dd MMM yyyy HH:mm:ss}";
 
          List<string> rawKeywords;
          try {
