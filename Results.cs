@@ -48,7 +48,7 @@ namespace PdfSearch {
          }
 
       internal void AddMatchedSheet(string pathName, string title, int pageCount) {
-         Matched?.addMatched(pathName, title, pageCount);
+         Matched?.AddMatched(pathName, title, pageCount);
          }
 
       internal void AddUnmatchedSheet(string pathName, string title, int pageCount) {

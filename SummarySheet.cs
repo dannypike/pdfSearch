@@ -1,6 +1,7 @@
 ﻿using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,8 +18,9 @@ namespace PdfSearch {
       private int totalMatchingFiles_ = 0;
       private int matchingFileCountRow_;
       private int fileCountRow_;
-      private Dictionary<string, int> keywordPages_
-         = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+      private int maxColumn_ = 0;
+      private Dictionary<string, MatchedKeyword> keywordPages_
+         = new Dictionary<string, MatchedKeyword>(StringComparer.CurrentCultureIgnoreCase);
       private int keywordfirstRow_;
       private int keywordLastRow_;
 
@@ -56,10 +58,8 @@ namespace PdfSearch {
 
          cells[++lastRow, 1].Value = "Created:";
          cells[lastRow, 2].Value = $"{Program.Timestamp:dd MMM yyyy HH:mm:ss}";
-         cells[lastRow, 5].Value = "Copyright (c) 2025 Community Action: Whitley and Shaw. All rights reserved.";
 
          ++lastRow;
-         cells[lastRow, 5].Value = "This document is CONFIDENTIAL and MUST NOT be shown to any third parties, without the express permission from both the CAWS Chairman and CAWS Secretary.";
 
          cells[++lastRow, 1].Value = "# of documents:";
          fileCountRow_ = lastRow;
@@ -77,15 +77,20 @@ namespace PdfSearch {
          cells[lastRow, 3].Value = "Keyword";
          cells[lastRow, 4].Value = "# of pages";
 
+         maxColumn_ = 5;
          keywordfirstRow_ = lastRow + 1;
          foreach (var kw in rawKeywords) {
             cells[++lastRow, 2].Value = kwId++;
             cells[lastRow, 3].Value = kw;
 
-            int count = 0;
-            keywordPages_.TryGetValue(kw, out count);
-            if (count > 0) {
-               cells[lastRow, 4].Value = count;
+            if (keywordPages_.TryGetValue(kw, out var matchedKeyword)) {
+
+               var column = 4;
+               cells[lastRow, column].Value = matchedKeyword.Count;
+               foreach (var matchWord in matchedKeyword.Matches) {
+                  cells[lastRow, ++column].Value = matchWord;
+                  }
+               maxColumn_ = Math.Max(maxColumn_, column);
                }
             }
          keywordLastRow_ = lastRow;
@@ -111,19 +116,34 @@ namespace PdfSearch {
 
          for (var row = keywordfirstRow_; row <= keywordLastRow_; ++row) {
             var kw = cells[row, 3].Text;
-            if (keywordPages_.TryGetValue(kw, out int count)) {
-               cells[row, 4].Value = count;
+            if (keywordPages_.TryGetValue(kw, out var matchedKeyword)) {
+               cells[row, 4].Value = matchedKeyword.Count;
+
+               var columnIndex = 5;
+               if (1 < matchedKeyword.Matches.Count) {
+                  Debug.Assert(false);
+                  }
+               foreach (var mkw in matchedKeyword.Matches) {
+                  cells[row, columnIndex++].Value = mkw;
+                  }
                }
             }
 
-         cells[1, 1].EntireColumn.AutoFit();
-         cells[1, 2].EntireColumn.AutoFit();
-         cells[1, 3].EntireColumn.AutoFit();
+         for (var columnIndex = 1; columnIndex <= maxColumn_; ++columnIndex) {
+            cells[1, columnIndex].EntireColumn.AutoFit();
+            }
+
+         // Add the copyright after resizing the other columns
+         cells[1, 5].Value = "Copyright (c) 2025 Community Action: Whitley and Shaw. All rights reserved.";
+         cells[2, 5].Value = "This document is CONFIDENTIAL and MUST NOT be shown to any third parties, without the express permission from both the CAWS Chairman and CAWS Secretary.";
          }
 
-      internal void IncKeyword(string userKeyword) {
-         keywordPages_.TryGetValue(userKeyword, out int count);
-         keywordPages_[userKeyword] = count + 1;
+      internal void IncKeyword(string userKeyword, string matchedWord) {
+         if (!keywordPages_.TryGetValue(userKeyword, out var matchedKeyword)) {
+            matchedKeyword = new MatchedKeyword();
+            keywordPages_.Add(userKeyword, matchedKeyword);
+            }
+         matchedKeyword.AddCount(matchedWord);
          }
       }
    }

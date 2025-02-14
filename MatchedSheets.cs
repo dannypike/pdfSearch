@@ -25,7 +25,7 @@ namespace PdfSearch {
          lastRow_ = 3;
          }
 
-      public void addMatched(string pdfFilename, string title, int pageCount) {
+      public void AddMatched(string pdfFilename, string title, int pageCount) {
          var cells = sheet_?.Cells;
          if (cells == null) {
             return;

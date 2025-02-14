@@ -140,12 +140,6 @@ namespace PdfSearch {
 
          range_[nextRow_, 4].Value = reportText;
 
-         var columnIndex = 5;
-         foreach (var kw in matchingKeywords) {
-            maxMatchingColumn_ = Math.Max(maxMatchingColumn_, columnIndex);
-            range_[nextRow_, columnIndex++].Value = kw;
-            }
-
          // Mark this page as needing to be checked by a human
          if (!toCheck_.ContainsKey(pageNumber.PdfPageNumber)) {   
             toCheck_.Add(pageNumber.PdfPageNumber, pageNumber);

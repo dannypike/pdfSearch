@@ -153,17 +153,20 @@ namespace PdfSearch {
                         for (var ii = 0; ii < regexCount; ++ii) {
                            var userKeyword = userKeywords[ii];
                            var isMatch = false;
+                           var matchedWord = "";
                            if (userKeyword.StartsWith("/") && userKeyword.EndsWith("/")) {
                               // It's a regex definition string, so we use the supplied Regex
                               var regexKeyword = regexKeywords[ii];
                               isMatch = regexKeyword?.IsMatch(keyword) ?? false;
+                              matchedWord = keyword;
                               }
                            else {
                               // Use simple string comparison for non-regex keywords
                               isMatch = userKeyword.Equals(keyword, StringComparison.CurrentCultureIgnoreCase);
+                              matchedWord = keyword;
                               }
                            if (isMatch) {
-                              summary?.IncKeyword(userKeyword);
+                              summary?.IncKeyword(userKeyword, matchedWord);
                               }
                            }
                         }
