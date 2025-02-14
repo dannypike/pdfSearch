@@ -116,6 +116,7 @@ namespace PdfSearch {
                   int indexOfTitle = searchText.IndexOf("Volume ");
                   if (indexOfTitle >= 0) {
                      title = blockText[indexOfTitle..];
+                     title = title.Replace("\n", " ").Split(".").FirstOrDefault() ?? title;
                      documentSheet?.SetTitle(title);
                      continue;
                      }
