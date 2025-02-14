@@ -14,7 +14,7 @@ using static System.Collections.Specialized.BitVector32;
 namespace PdfSearch {
    internal class Program {
       public static int TotalPages { get; internal set; }
-      public static string Version { get => "1"; }
+      public static string Version { get => "2"; }
       public static DateTime Timestamp { get; internal set; } = DateTime.Now;
 
       static int Main(string[] args) {

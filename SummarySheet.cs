@@ -76,6 +76,7 @@ namespace PdfSearch {
          cells[++lastRow, 2].Value = "#";
          cells[lastRow, 3].Value = "Keyword";
          cells[lastRow, 4].Value = "# of pages";
+         cells[lastRow, 5].Value = "matches found";
 
          maxColumn_ = 5;
          keywordfirstRow_ = lastRow + 1;
@@ -109,6 +110,7 @@ namespace PdfSearch {
             }
          if (pageCountRow_ > 0) {
             cells[pageCountRow_, 2].Value = totalPages_;
+            cells[pageCountRow_, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             }
          if (matchingPageCountRow_ > 0) {
             cells[matchingPageCountRow_, 2].Value = totalMatchingPages_;
@@ -120,9 +122,6 @@ namespace PdfSearch {
                cells[row, 4].Value = matchedKeyword.Count;
 
                var columnIndex = 5;
-               if (1 < matchedKeyword.Matches.Count) {
-                  Debug.Assert(false);
-                  }
                foreach (var mkw in matchedKeyword.Matches) {
                   cells[row, columnIndex++].Value = mkw;
                   }

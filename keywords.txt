@@ -15,7 +15,7 @@ Gastard
 Golf
 /Goode?s\s+Hill/
 fire
-fluori
+/fluoric|fluoride/
 /hazard(ous)?/
 inverter
 /Littleworth\s+Lane/
