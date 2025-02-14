@@ -59,6 +59,7 @@ namespace PdfSearch {
          var quickFinder = new Regex(string.Join("|", keywords), RegexOptions.IgnoreCase);
 
          var now = DateTime.Now;
+         var consoleTitle = OperatingSystem.IsWindows() ? Console.Title : "PdfSearch";
          try {
             string[] pdfFiles = [];
             if (File.Exists("filenames.txt")) {
@@ -83,15 +84,28 @@ namespace PdfSearch {
                   using (var docFile = new DocumentFile(results)) {
                      docFile.Pathname = pdfFilename;
                      if (docFile.Open()) {
+                        var pageCount = docFile.PageCount;
+
                         Console.Write($"\r\u001b[K\r{spinner[spinCount++ % 4]} {Path.GetFileName(pdfFilename)}"
-                           + $", with {docFile.PageCount} {pluralled("page", docFile.PageCount)} ");
+                           + $", with {pageCount} {pluralled("page", pageCount)} ");
 
                         documents.Add(docFile.Id, docFile);
+
+                        if (OperatingSystem.IsWindows()) {
+                           var trimmedName = Path.GetFileNameWithoutExtension(pdfFilename);
+                           var trimIndex = trimmedName.IndexOf("_V");
+                           if (trimIndex > 0) {
+                              trimmedName = trimmedName[(trimIndex + 1)..];
+                              }
+                           if (OperatingSystem.IsWindows()) {
+                              Console.Title = $" ({pdfIndex};{pageCount})-{trimmedName}";
+                              }
+                           }
                         var matched = docFile.SearchPages(pdfFilename, ++pdfIndex, rawKeywords
                            , individualRegexes, quickFinder, results);
                         if (summary != null) {
                            ++summary.TotalFiles;
-                           summary.TotalPages += docFile.NumberOfPages;
+                           summary.TotalPages += pageCount;
                            if (matched) {
                               ++summary.TotalMatchingFiles;
                               }
@@ -108,6 +122,11 @@ namespace PdfSearch {
          catch (Exception ex) {
             Logger.WriteLine($"exception: {ex.Message}");
             return 1;
+            }
+         finally {
+            if (OperatingSystem.IsWindows()) {
+               Console.Title = consoleTitle;
+               }
             }
          }
 
