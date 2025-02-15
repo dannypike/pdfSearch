@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace PdfSearch {
    internal class DocumentSheet {
+      private DocumentFile documentFile_;
       private ExcelPackage? book_;
       private ExcelWorksheet? sheet_;
       private ExcelRange? range_;
@@ -19,7 +20,6 @@ namespace PdfSearch {
       private Dictionary<int, ExcelRange> keywordRows_ = new Dictionary<int, ExcelRange>();
       private int titleRow_;
       private int maxMatchingColumn_ = 4;
-      private string titleText_ = "";
       const string REMOVE_FILENAME_COMMON_PART1 = "EN010168 LDSP PEIR ";
       const int COLUMN_WIDTH_CONTEXT = 115;
       private Dictionary<int, PageNumber> toCheck_ = new Dictionary<int, PageNumber>();
@@ -27,8 +27,11 @@ namespace PdfSearch {
 
       internal int DocumentIndex { get; private set; }
 
-      public DocumentSheet(ExcelPackage? book, string pdfFilename, int pdfIndex, int numberOfPages) {
+      public DocumentSheet(DocumentFile documentFile, ExcelPackage? book
+            , string pdfFilename, int pdfIndex, int numberOfPages) {
+
          book_ = book;
+         documentFile_ = documentFile;
          pdfFilename_ = pdfFilename;
          numberOfPages_ = numberOfPages;
          DocumentIndex = pdfIndex;
@@ -66,8 +69,7 @@ namespace PdfSearch {
          range_[nextRow_, 4].Value = Path.GetFileName(pdfFilename_);
 
          range_[++nextRow_, 3].Value = "Title";
-         range_[nextRow_, 4].Value = "not found";
-         titleRow_ = nextRow_;
+         titleRow_ = nextRow_;  // The title will be detected by DocumentFile         
 
          range_[++nextRow_, 3].Value = "Total Pages";
          range_[nextRow_, 4].Value = numberOfPages;
@@ -102,13 +104,6 @@ namespace PdfSearch {
 
          range_[nextRow_, 5].Value = "Keywords";
          range_[nextRow_, 5].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-         }
-
-      internal void SetTitle(string title) {
-         titleText_ = title;
-         if (range_ != null) {
-            range_[titleRow_, 4].Value = titleText_;
-            }
          }
 
       internal void FormatColumns() {
@@ -162,6 +157,7 @@ namespace PdfSearch {
             }
 
          range_[pagesToReadRow_, 4].Value = toCheck_.Count;
+         range_[titleRow_, 4].Value = documentFile_.Title;
          
          // Combine adjacent pages into ranges
          var checkCount = toCheck_.Count;

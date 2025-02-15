@@ -28,12 +28,16 @@ namespace PdfSearch {
       private static int nextId_ = 0;
 
       const int TruncateLength = 120;
-      const string DefaultTitle = "";
-      private Regex regexCleanForConsole = new Regex(@"[^\x20-\x7E]");
+      private Regex regexCleanForConsole = new Regex(@"[^\x20-\x7E]", RegexOptions.Compiled);
+      private Regex regexTitle = new Regex(
+         @"(Preliminary\s+Environmental\s+Information\s+Report\s+)?Volume (?<volume>[1-9]+),"
+         + @"\sChapter\s(?<chapter>[1-9][0-9]*):\s(?<title>.+)$"
+         , RegexOptions.Compiled);
       private Results results_;  // The spreadsheet for output
 
       public int Id { get; set; } = ++nextId_;
       public string Pathname { get; set; } = "";
+      public string? Title {get; private set; } = null;
 
       private PdfDocument? pdfFile_ = null;
 
@@ -68,7 +72,6 @@ namespace PdfSearch {
       public bool SearchPages(string pathName, int pdfIndex, List<string> userKeywords
             , List<Regex?> regexKeywords, Regex finder, Results results) {
 
-         string title = DefaultTitle;
          DocumentSheet? documentSheet = null;
          SummarySheet? summary = results.Summary;
          var pdfPageNumber = 0;   // The PDF page number (not the same as the Lime Down Index page number)
@@ -108,16 +111,13 @@ namespace PdfSearch {
                   }
 
                var blockText = pdfBlock.Text;
-
                var searchText = blockText.Replace("\n", " ");
 
                // Is this the title block?
-               if (title == DefaultTitle) {  // Have we already got the title?
-                  int indexOfTitle = searchText.IndexOf("Volume ");
-                  if (indexOfTitle >= 0) {
-                     title = blockText[indexOfTitle..];
-                     title = title.Replace("\n", " ").Split(".").FirstOrDefault() ?? title;
-                     documentSheet?.SetTitle(title);
+               if (pdfPageNumber == 1 && Title == null) {
+                  var match = regexTitle.Match(searchText);
+                  if (match.Success) {
+                     Title = $"V{match.Groups["volume"].Value}.{match.Groups["chapter"].Value}: {match.Groups["title"].Value}";
                      continue;
                      }
                   }
@@ -139,8 +139,7 @@ namespace PdfSearch {
 
                      // Add this page to the results
                      if (documentSheet == null) {
-                        documentSheet = results.AddPage(pathName, pdfIndex, NumberOfPages);
-                        Logger.WriteLine(title);
+                        documentSheet = results.AddPage(this, pathName, pdfIndex, NumberOfPages);
                         }
 
                      // And log the words that matched one of the keyword definitions
@@ -201,13 +200,13 @@ namespace PdfSearch {
 
          if (documentSheet != null) {
             documentSheet.FormatColumns();
-            results.AddMatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
+            results.AddMatchedSheet(Path.GetFileName(pathName), Title ?? "", NumberOfPages);
 
             // Document separator
             Logger.WriteLine("+++");
             return true;
             }
-         results.AddUnmatchedSheet(Path.GetFileName(pathName), title, NumberOfPages);
+         results.AddUnmatchedSheet(Path.GetFileName(pathName), Title ?? "", NumberOfPages);
          return false;
          }
       }

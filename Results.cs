@@ -54,8 +54,8 @@ namespace PdfSearch {
             }
          }
 
-      public DocumentSheet AddPage(string pdfFilename, int pdfIndex, int pageNumber) {
-         var pageSheet = new DocumentSheet(book_, pdfFilename, pdfIndex, pageNumber);
+      public DocumentSheet AddPage(DocumentFile documentFile, string pdfFilename, int pdfIndex, int pageNumber) {
+         var pageSheet = new DocumentSheet(documentFile, book_, pdfFilename, pdfIndex, pageNumber);
          PageSheets.Add(pdfFilename, pageSheet);
          return pageSheet;
          }
