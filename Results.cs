@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,12 +15,24 @@ namespace PdfSearch {
       private MatchedSheets? Matched;
       private UnmatchedSheets? Unmatched;
 
+      [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+      private static extern int MessageBox(IntPtr hWnd, String text, String caption, uint type);
+
       public Results() {
          //xlsxFilename_ = $"searchResults-{DateTime.Now:yyyy-MM-dd HH-mm-ss}.xlsx";
          var fileInfo = new FileInfo(xlsxFilename_);
-         if (fileInfo.Exists) {
-            fileInfo.Delete();
+         while (fileInfo.Exists) {
+            try {
+               fileInfo.Delete();
+               } catch { }
             if (fileInfo.Exists) {
+               if (OperatingSystem.IsWindows()) {
+                  var result = MessageBox(IntPtr.Zero, $"Results file '{xlsxFilename_}' already exists and cannot be deleted"
+                     , "Cannot run PdfSearch", 5); // Retry, Cancel
+                  if (4 == result) {   // ID_RETRY
+                     continue;
+                     }
+                  }
                throw new Exception($"Results file '{xlsxFilename_}' already exists and cannot be deleted");
                }
             }

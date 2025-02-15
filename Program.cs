@@ -17,6 +17,7 @@ namespace PdfSearch {
       public static string Version { get => "2"; }
       public static DateTime Timestamp { get; internal set; } = DateTime.Now;
 
+      [STAThread] // For the MessageBox in the Results ctor
       static int Main(string[] args) {
          string folderPath = @"D:\root\WhitleyShaw\CAWS\Battery\WG\Documents\BESS PEIR";
          string[] spinner = new string[] { "|", "/", "-", "\\" };
