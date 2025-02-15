@@ -137,7 +137,7 @@ namespace PdfSearch {
                         reportText = searchText.Substring(0, reportLength - 3) + "...";
                         }
 
-                     // If this is the first match, then output the title
+                     // Add this page to the results
                      if (documentSheet == null) {
                         documentSheet = results.AddPage(pathName, pdfIndex, NumberOfPages);
                         Logger.WriteLine(title);

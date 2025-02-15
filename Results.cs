@@ -60,7 +60,7 @@ namespace PdfSearch {
          Matched?.FormatColumns();
          Unmatched?.FormatColumns();
 
-         foreach(var pageSheet in PageSheets) {
+         foreach (var pageSheet in PageSheets) {
             pageSheet.Value.Finish();
             }
          }

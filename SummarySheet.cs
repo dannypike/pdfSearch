@@ -58,6 +58,7 @@ namespace PdfSearch {
 
          cells[++lastRow, 1].Value = "Created:";
          cells[lastRow, 2].Value = $"{Program.Timestamp:dd MMM yyyy HH:mm:ss}";
+         cells[lastRow, 3].Value = $"PdfSearch v{Program.Version}";
 
          ++lastRow;
 
@@ -74,15 +75,18 @@ namespace PdfSearch {
 
          var kwId = 1;
          cells[++lastRow, 2].Value = "#";
+         cells[lastRow, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
          cells[lastRow, 3].Value = "Keyword";
          cells[lastRow, 4].Value = "# of pages";
-         cells[lastRow, 5].Value = "matches found";
+         cells[lastRow, 5].Value = "Matches found by this keyword";
 
          maxColumn_ = 5;
          keywordfirstRow_ = lastRow + 1;
          foreach (var kw in rawKeywords) {
             cells[++lastRow, 2].Value = kwId++;
+            cells[lastRow, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             cells[lastRow, 3].Value = kw;
+            cells[lastRow, 3].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
 
             if (keywordPages_.TryGetValue(kw, out var matchedKeyword)) {
 
@@ -90,11 +94,11 @@ namespace PdfSearch {
                cells[lastRow, column].Value = matchedKeyword.Count;
                foreach (var matchWord in matchedKeyword.Matches) {
                   cells[lastRow, ++column].Value = matchWord;
+                  maxColumn_ = Math.Max(maxColumn_, column);
                   }
-               maxColumn_ = Math.Max(maxColumn_, column);
                }
+            keywordLastRow_ = lastRow;
             }
-         keywordLastRow_ = lastRow;
          }
 
       internal void Finish() {
@@ -104,9 +108,11 @@ namespace PdfSearch {
             }
          if (fileCountRow_ > 0) {
             cells[fileCountRow_, 2].Value = totalFiles_;
+            cells[fileCountRow_, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             }
          if (matchingFileCountRow_ > 0) {
             cells[matchingFileCountRow_, 2].Value = totalMatchingFiles_;
+            cells[matchingFileCountRow_, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             }
          if (pageCountRow_ > 0) {
             cells[pageCountRow_, 2].Value = totalPages_;
@@ -114,17 +120,21 @@ namespace PdfSearch {
             }
          if (matchingPageCountRow_ > 0) {
             cells[matchingPageCountRow_, 2].Value = totalMatchingPages_;
+            cells[matchingPageCountRow_, 2].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
             }
 
          for (var row = keywordfirstRow_; row <= keywordLastRow_; ++row) {
             var kw = cells[row, 3].Text;
             if (keywordPages_.TryGetValue(kw, out var matchedKeyword)) {
                cells[row, 4].Value = matchedKeyword.Count;
+               cells[row, 4].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
 
-               var columnIndex = 5;
+               var columnIndex = 4;
                foreach (var mkw in matchedKeyword.Matches) {
-                  cells[row, columnIndex++].Value = mkw;
+                  cells[row, ++columnIndex].Value = mkw;
+                  cells[row, ++columnIndex].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                   }
+               maxColumn_ = Math.Max(maxColumn_, columnIndex);
                }
             }
 
@@ -135,6 +145,7 @@ namespace PdfSearch {
          // Add the copyright after resizing the other columns
          cells[1, 5].Value = "Copyright (c) 2025 Community Action: Whitley and Shaw. All rights reserved.";
          cells[2, 5].Value = "This document is CONFIDENTIAL and MUST NOT be shown to any third parties, without the express permission from both the CAWS Chairman and CAWS Secretary.";
+
          }
 
       internal void IncKeyword(string userKeyword, string matchedWord) {

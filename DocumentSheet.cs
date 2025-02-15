@@ -144,6 +144,16 @@ namespace PdfSearch {
          if (!toCheck_.ContainsKey(pageNumber.PdfPageNumber)) {   
             toCheck_.Add(pageNumber.PdfPageNumber, pageNumber);
             }
+
+         // And list the keywords that matched
+         var column = 4;
+         foreach (var mkw in matchingKeywords) {
+            range_[nextRow_, ++column].Value = mkw ?? "";
+            range_[nextRow_, column].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+
+            // Remember the maximum number of column in this sheet for auto-fit later
+            maxMatchingColumn_ = Math.Max(maxMatchingColumn_, column);
+            }
          }
 
       internal void Finish() {
@@ -190,6 +200,11 @@ namespace PdfSearch {
          var csvPages = minMax
             .Select(pp => pp.MinPage == pp.MaxPage ? pp.MinPage.ToString() : $"{pp.MinPage}-{pp.MaxPage}");
          range_[pagesToReadRow_, 4].Value = string.Join(", ", csvPages);
+
+         // Auto0fit the keyword columns
+         for (var column = 5; column <= maxMatchingColumn_; ++column) {
+            range_[1, column].EntireColumn.AutoFit();
+            }
          }
       }
    }
