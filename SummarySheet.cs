@@ -132,7 +132,7 @@ namespace PdfSearch {
                var columnIndex = 4;
                foreach (var mkw in matchedKeyword.Matches) {
                   cells[row, ++columnIndex].Value = mkw;
-                  cells[row, ++columnIndex].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                  cells[row, columnIndex].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                   }
                maxColumn_ = Math.Max(maxColumn_, columnIndex);
                }
